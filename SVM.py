@@ -17,15 +17,16 @@ wine_type = wine["Type"]
 X_train, X_test, y_train, y_test = train_test_split(wine_features, wine_type, test_size = 0.2, random_state = 42)
 
 reg_param = [ 1, 10, 50, 100, 500, 1000, 5000 ]
+gamma = [1, 0.1, 0.01, 0.001, 0.0001, 0.00001]
 
-for reg in reg_param:
-    model = svm.SVC(kernel='poly', C=reg, gamma='auto')
+for g in gamma:
+    model = svm.SVC(kernel='rbf', gamma=g)
 
     print ("training Model....")
     model.fit(X_train, y_train)
 
     predicted_types = model.predict(X_test)
 
-    print("C = ", reg, "Accuracy: ")
+    print("gamma = ", g, "Accuracy: ")
     print("accuracy: ", accuracy_score(y_test, predicted_types) )
     print("MSE: ", mean_squared_error(y_test, predicted_types))
