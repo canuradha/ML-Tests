@@ -1,10 +1,11 @@
 import pandas as pd
 import numpy as np
 from numpy.linalg import norm
+import matplotlib.pyplot as plt
 
 np.random.seed(42)
 
-data = pd.read_csv('../Data/Iris.csv')
+data = pd.read_csv('../datasets/iris/Iris.csv')
 feature_set = ['SepalLengthCm', 'SepalWidthCm', 'PetalLengthCm', 'PetalWidthCm']
 
 features = data[feature_set]
@@ -38,28 +39,50 @@ def within_cluter_sse(features, centeroids, labels):
         distances[labels == i] = norm(features[i == labels] - centeroids[i], axis=1)
     return np.sum(np.absolute(distances))
 
-def update_centeroid(features, distances, clusters):
+def get_labels(distances):
+    return np.argmin(distances, axis=1)
+
+def update_centeroid(features, distances, clusters, labels):
     centeroids = np.zeros([clusters, features.shape[1]])
-    lables = np.argmin(distances, axis=1)
-    # print(lables)
     for k in range(clusters):
         # print(np.mean(features[k == lables], axis=0))
-        centeroids[k, :] = np.mean(features[lables == k], axis= 0)
-    print(within_cluter_sse(features,centeroids, lables))
+        centeroids[k, :] = np.mean(features[labels == k], axis= 0)
+    # print(within_cluter_sse(features,centeroids, labels))
     return centeroids
 
 def centeroid_distance_change(old, new):
-    return np.absolute(old - new)
+    return np.absolute(new - old)
+
+def plot_data(features, centeroids, labels=None):
+    # fig = plt.figure(figsize=(5,5))
+    plt.clf()
+    colormap = [np.random.rand(3,) for i in range(clusters)]
+    if type(labels).__module__ != 'numpy':
+        plt.scatter(features.iloc[:,0], features.iloc[:,1], color='k')
+    else:
+        for i, value in enumerate(np.array([features.iloc[:,0], features.iloc[:,1]]).transpose()):   
+            plt.scatter(value[0], value[1], color=colormap[labels[i]])
+    for i,point in enumerate(centeroids):
+        plt.scatter(point[0], point[1], color=colormap[i], marker='*', s=200, edgecolor='k')
+    plt.show()
 
 def fit(features, clusters, sensivity = 0.001):
     centeroids = init_centeroids(clusters, features)
+    plot_data(features, centeroids)
+    i = 0
     while True:
         distances = compute_distance(features,clusters, centeroids)
-        centeroids_new = update_centeroid(features, distances, clusters)
-        print(centeroid_distance_change(centeroids, centeroids_new))
+        labels = get_labels(distances)
+        centeroids_new = update_centeroid(features, distances, clusters, labels)
+        # print(centeroid_distance_change(centeroids, centeroids_new))
         if((centeroid_distance_change(centeroids, centeroids_new)).any() <= sensivity):
+            print('finished')
             break
         centeroids = centeroids_new
+        if(i % 3 == 0):
+            plot_data(features, centeroids, labels)
+        i += 1
+    plot_data(features, centeroids, labels)
     return centeroids
 
 
